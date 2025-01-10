@@ -1,0 +1,305 @@
+<!DOCTYPE html>
+<html lang="en">
+    <head>
+        <meta charset="UTF-8">
+        <meta name="viewport" content="width=device-width, initial-scale=1.0">
+        <meta name="description" content="Calculator form with adjustable pre-populated values">
+        <meta name="theme-color" content="#ffffff">
+
+        <!-- Favicon -->
+        <link rel="icon" type="image/x-icon" href="favicon.ico">
+        <link rel="apple-touch-icon" href="icon.png">
+
+        <!-- Title -->
+        <title>Sample size calculator for multi-variant testing</title>
+
+        <!-- CSS Reset -->
+        <style>
+            *, *::before, *::after {
+                box-sizing: border-box;
+                margin: 0;
+                padding: 0;
+            }
+
+            html {
+                font-size: 16px;
+                scroll-behavior: smooth;
+            }
+
+            body {
+                line-height: 1.5;
+                -webkit-font-smoothing: antialiased;
+                font-family: system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, Cantarell, 'Open Sans', 'Helvetica Neue', sans-serif;
+            }
+
+            img, picture, video, canvas, svg {
+                display: block;
+                max-width: 100%;
+            }
+
+            input, button, textarea, select {
+                font: inherit;
+            }
+
+            p, h1, h2, h3, h4, h5, h6 {
+                overflow-wrap: break-word;
+            }
+        </style>
+
+        <!-- custom CSS -->
+        <style>
+        .container {
+            max-width: 800px;
+            margin: 0 auto;
+            padding: 20px;
+        }
+        
+        .form-group {
+            display: grid;
+            gap: 20px;
+            margin-bottom: 20px;
+        }
+        
+        .form-group > div {
+            display: grid;
+            gap: 5px;
+        }
+        
+        .explainer {
+            display: block;
+            font-size: 0.8em;
+            font-weight: normal;
+            color: #666;
+            margin-top: 2px;
+        }
+
+        .calculate-btn:disabled {
+            background-color: #cccccc;
+            cursor: not-allowed;
+            }
+
+        .results:empty {
+            display: none;
+        }
+
+        h1 {
+            margin-bottom: 20px;
+        }
+
+        label {
+            font-weight: bold;
+        }
+        
+        input {
+            padding: 8px;
+            border: 1px solid #ccc;
+            border-radius: 4px;
+        }
+        
+        .calculate-btn {
+            padding: 10px 20px;
+            background-color: #007bff;
+            color: white;
+            border: none;
+            border-radius: 4px;
+            cursor: pointer;
+        }
+        
+        .calculate-btn:hover {
+            background-color: #0056b3;
+        }
+        
+        .results {
+            margin-top: 20px;
+            padding: 20px;
+            background-color: #f8f9fa;
+            border-radius: 4px;
+        }
+        
+        .results p {
+            margin: 10px 0;
+        }
+        
+        .disclaimer {
+            padding-bottom: 40px;
+            color: #EE0000;
+        }   
+        </style>
+    </head>
+
+    <body>
+        <main class="container">
+            <h1>Sample size calculator for multi-variant testing</h1>
+            <p class="disclaimer"><strong>IMPORTANT:</strong> Always consult a data specialist before conducting data experiments.</p>
+
+            <form id="calculatorForm" class="calculator-form">
+                <div class="form-group">
+                    <div>
+                        <label for="significanceLevel">
+                            Significance level
+                            <span class="explainer">The acceptable error margin, usually leave at 0.05 meaning that an error margin of 5% can be accepted.</span>
+                        </label>
+                        <input type="number" 
+                            id="significanceLevel" 
+                            name="significanceLevel" 
+                            value="0.05" 
+                            step="0.01" 
+                            min="0.01"
+                            max="0.99"
+                            required>
+                    </div>
+                    <div>
+                        <label for="statisticalPower">
+                            Statistical Power
+                            <span class="explainer">The sensitivity of your test. Usually leave at 0.8 meaning you'll catch 80% of meaningful differences.</span>
+                        </label>
+                        <input type="number" 
+                            id="statisticalPower" 
+                            name="statisticalPower" 
+                            value="0.8" 
+                            step="0.01"
+                            min="0.01"
+                            max="0.99"
+                            required>
+                    </div>
+                    <div>
+                        <label for="minimumDetectableEffect">
+                            Minimum Detectable Effect
+                            <span class="explainer">How much difference you want to detect, 0.2 meaning a 20% increase or decrease.</span>
+                        </label>
+                        <input type="number" 
+                            id="minimumDetectableEffect" 
+                            name="minimumDetectableEffect" 
+                            value="0.2" 
+                            step="0.01"
+                            min="0.01"
+                            max="0.99"
+                            required>
+                    </div>
+                    <div>
+                        <label for="baselineConversionRate">
+                            Baseline Conversion Rate
+                            <span class="explainer">Your current conversion rate, e.g., 0.05 meaning 5% of users currently convert.</span>
+                        </label>
+                        <input type="number" 
+                            id="baselineConversionRate" 
+                            name="baselineConversionRate" 
+                            value="0.05" 
+                            step="0.01"
+                            min="0.01"
+                            max="0.99"
+                            required>
+                    </div>
+                    <div>
+                        <label for="numberOfVariants">
+                            Number of variants
+                            <span class="explainer">How many different versions you want to test, total number of versions including control group.</span>
+                        </label>
+                        <input type="number" 
+                            id="numberOfVariants" 
+                            name="numberOfVariants" 
+                            value="2" 
+                            step="1"
+                            min="2"
+                            max="10"
+                            required>
+                    </div>
+                </div>
+                <button type="submit" class="calculate-btn">Calculate</button>
+            </form>
+        
+            <div id="results" class="results">
+                <div id="perVariantResult"></div>
+                <div id="totalResult"></div>
+            </div>
+        </main>
+
+        <script>
+            // Function to approximate z-score (inverse of standard normal cumulative distribution)
+            function approximateZScore(p) {
+                // Abramowitz and Stegun approximation
+                const a1 = -39.6968302866538, a2 = 220.946098424521, a3 = -275.928510446969;
+                const a4 = 138.357751867269, a5 = -30.6647980661472, a6 = 2.50662827745924;
+                const b1 = -54.4760987982241, b2 = 161.585836858041, b3 = -155.698979859887;
+                const b4 = 66.8013118877197, b5 = -13.2806815528857, c1 = -7.78489400243029E-03;
+                const c2 = -0.322396458041136, c3 = -2.40075827716184, c4 = -2.54973253934373;
+                const c5 = 4.37466414146497, c6 = 2.93816398269878, d1 = 7.78469570904146E-03;
+                const d2 = 0.32246712907004, d3 = 2.445134137143, d4 = 3.75440866190742;
+                const p_low = 0.02425, p_high = 1 - p_low;
+                let q, r, z;
+            
+                if (p < p_low) {
+                    q = Math.sqrt(-2 * Math.log(p));
+                    z = (((((c1 * q + c2) * q + c3) * q + c4) * q + c5) * q + c6) / ((((d1 * q + d2) * q + d3) * q + d4) * q + 1);
+                } else if (p <= p_high) {
+                    q = p - 0.5;
+                    r = q * q;
+                    z = (((((a1 * r + a2) * r + a3) * r + a4) * r + a5) * r + a6) * q / (((((b1 * r + b2) * r + b3) * r + b4) * r + b5) * r + 1);
+                } else {
+                    q = Math.sqrt(-2 * Math.log(1 - p));
+                    z = -(((((c1 * q + c2) * q + c3) * q + c4) * q + c5) * q + c6) / ((((d1 * q + d2) * q + d3) * q + d4) * q + 1);
+                }
+            
+                return z;
+            }
+            
+            function calculateSampleSize(inputs) {
+                const zBeta = Math.abs(approximateZScore(1 - inputs.statisticalPower));
+                console.log(`Statistical Power: ${inputs.statisticalPower}, zBeta: ${zBeta}`);
+            
+                // Calculate p1, p2, and p
+                const p1 = inputs.baselineConversionRate;
+                const p2 = p1 * (1 + inputs.minimumDetectableEffect);
+                const p = (p1 + p2) / 2;
+            
+                // Apply Bonferroni correction
+                const numberOfComparisons = (inputs.numberOfVariants * (inputs.numberOfVariants - 1)) / 2;
+                const adjustedSignificanceLevel = inputs.significanceLevel / numberOfComparisons;
+                
+                // Calculate zAlpha based on adjusted significance level
+                const zAlpha = Math.abs(approximateZScore(1 - adjustedSignificanceLevel / 2));
+            
+                // Calculate sample size
+                const numerator = 2 * Math.pow(zAlpha + zBeta, 2) * p * (1 - p);
+                const denominator = Math.pow(p2 - p1, 2);
+                const sampleSizePerVariant = Math.ceil(numerator / denominator);
+            
+                return sampleSizePerVariant;
+            }
+            
+            // Form submission handler
+            document.getElementById('calculatorForm').addEventListener('submit', function(e) {
+                e.preventDefault();
+                
+                // Get form values
+                const inputs = {
+                    significanceLevel: parseFloat(document.getElementById('significanceLevel').value),
+                    statisticalPower: parseFloat(document.getElementById('statisticalPower').value),
+                    minimumDetectableEffect: parseFloat(document.getElementById('minimumDetectableEffect').value),
+                    baselineConversionRate: parseFloat(document.getElementById('baselineConversionRate').value),
+                    numberOfVariants: parseInt(document.getElementById('numberOfVariants').value)
+                };
+
+                if (inputs.numberOfVariants > 10) {
+                    alert('Please enter a reasonable number of variants (2-10)');
+                    return;
+                }
+            
+                // Calculate results
+                document.querySelector('.calculate-btn').disabled = true;
+                const sampleSizePerVariant = calculateSampleSize(inputs);
+                const totalSampleSize = sampleSizePerVariant * inputs.numberOfVariants;
+                document.querySelector('.calculate-btn').disabled = false;
+            
+                // Display results
+                document.getElementById('perVariantResult').innerHTML = 
+                    `<p>Sample size per variant: <strong>${sampleSizePerVariant.toLocaleString()}</strong></p>`;
+                document.getElementById('totalResult').innerHTML = 
+                    `<p>Total sample size: <strong>${totalSampleSize.toLocaleString()}</strong></p>`;
+            });
+        </script>
+    </body>
+</html>
+
+
+
